@@ -285,8 +285,12 @@ static unsigned int get_next_col(unsigned int cur_col, char c) {
   This function should not modify anything.
 */
 static char next_square(game_t *game, unsigned int snum) {
-  // TODO: Implement this function.
-  return '?';
+  char snake_head = get_board_at(game, game->snakes[snum].head_row, game->snakes[snum].head_col);
+
+  unsigned int next_row = get_next_row(game->snakes[snum].head_row, snake_head);
+  unsigned int next_col = get_next_col(game->snakes[snum].head_col, snake_head);
+
+  return get_board_at(game, next_row, next_col);
 }
 
 /*
@@ -301,7 +305,23 @@ static char next_square(game_t *game, unsigned int snum) {
   Note that this function ignores food, walls, and snake bodies when moving the head.
 */
 static void update_head(game_t *game, unsigned int snum) {
-  // TODO: Implement this function.
+  char snake_head = get_board_at(game, game->snakes[snum].head_row, game->snakes[snum].head_col);
+  unsigned int next_row = get_next_row(game->snakes[snum].head_row, snake_head);
+  unsigned int next_col = get_next_col(game->snakes[snum].head_col, snake_head);
+  unsigned int old_head_row = game->snakes[snum].head_row;
+  unsigned int old_head_col = game->snakes[snum].head_col;
+
+  //Set new snake head
+  set_board_at(game, next_row, next_col, snake_head);
+
+  //Update Snake
+  game->snakes[snum].head_row = next_row;
+  game->snakes[snum].head_col = next_col;
+
+  //Replace old head spot
+  set_board_at(game, old_head_row, old_head_col, head_to_body(get_board_at(game, game->snakes[snum].head_row, game->snakes[snum].head_col)));
+
+
   return;
 }
 
@@ -316,13 +336,60 @@ static void update_head(game_t *game, unsigned int snum) {
   ...in the snake struct: update the row and col of the tail
 */
 static void update_tail(game_t *game, unsigned int snum) {
-  // TODO: Implement this function.
+  char snake_tail = get_board_at(game, game->snakes[snum].tail_row, game->snakes[snum].tail_col);
+  unsigned int next_row = get_next_row(game->snakes[snum].tail_row, snake_tail);
+  unsigned int next_col = get_next_col(game->snakes[snum].tail_col, snake_tail);
+  char body_val = get_board_at(game, next_row, next_col);
+
+  //Update old tail
+  set_board_at(game, game->snakes[snum].tail_row, game->snakes[snum].tail_col, ' ');
+
+  //Update new tail value
+  snake_tail = body_to_tail(body_val);
+
+  //Set new tail
+  set_board_at(game, next_row, next_col, snake_tail);
+  
+  //Update Snake
+  game->snakes[snum].tail_row = next_row;
+  game->snakes[snum].tail_col = next_col;
+
   return;
 }
 
 /* Task 4.5 */
 void update_game(game_t *game, int (*add_food)(game_t *game)) {
-  // TODO: Implement this function.
+  for(unsigned int snum = game->num_snakes; snum-- > 0; ){
+    
+    //Dont update dead snakes
+    if(game->snakes[snum].live == false){
+      continue;
+    }
+
+    char next =  next_square(game, snum);
+
+    if (next == '*'){
+      //Only Head Moves
+      update_head(game, snum);
+        
+      //Add new Food
+      add_food(game);
+    }
+    else if (next == '#' || is_snake(next)){
+      //Head Turns to x
+      set_board_at(game, game->snakes[snum].head_row, game->snakes[snum].head_col, 'x');
+
+      //Snake changes to dead
+      game->snakes[snum].live = false;
+    }
+    else{
+      //Update Head
+      update_head(game, snum);
+
+      //Update Tail 
+      update_tail(game, snum);
+    }
+  }
   return;
 }
 
