@@ -395,8 +395,19 @@ void update_game(game_t *game, int (*add_food)(game_t *game)) {
 
 /* Task 5.1 */
 char *read_line(FILE *fp) {
-  // TODO: Implement this function.
-  return NULL;
+
+  char *line = malloc(100);
+
+  if (line == NULL) {
+    return NULL;
+  }
+
+  if (fgets(line, 100, fp) == NULL) {
+    free(line);
+    return NULL;
+  }
+
+  return line;
 }
 
 /* Task 5.2 */
